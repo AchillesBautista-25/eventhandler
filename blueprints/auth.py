@@ -31,7 +31,7 @@ def google_login():
     if not current_app.config["GOOGLE_CLIENT_ID"]:
         flash("Google OAuth is not configured on this server.", "warning")
         return redirect(url_for("auth.login"))
-    redirect_uri = url_for("auth.google_callback", _external=True)
+    redirect_uri = "http://localhost:3000/auth/callback"
     return oauth.google.authorize_redirect(redirect_uri)
 
 
