@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<div class="min-h-[85vh] grid lg:grid-cols-2 gap-6 items-center">
+
+  <!-- Left hero -->
+  <div class="hidden lg:flex flex-col justify-between h-[600px] rounded-3xl p-10 text-white
+              bg-gradient-to-br from-royal-600 via-royal-500 to-indigo-700 relative overflow-hidden">
+    <div class="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10"></div>
+    <div class="absolute -bottom-16 -left-10 w-56 h-56 rounded-full bg-white/10"></div>
+
+    <div class="relative">
+      <div class="w-12 h-12 rounded-2xl bg-white/20 grid place-items-center font-extrabold">EH</div>
+      <h1 class="mt-8 text-4xl font-extrabold leading-tight">Event Attendance<br>Monitoring System</h1>
+      <p class="mt-4 text-white/80 max-w-sm">
+        Seamlessly manage event proposals, approvals, and real-time attendance
+        across your campus — all in one portal.
+      </p>
+    </div>
+
+    <div class="relative flex items-center gap-3 text-sm text-white/80">
+      <i data-lucide="shield-check" class="w-5 h-5"></i>
+      Secured with Google OAuth & role-based access.
+    </div>
+  </div>
+
+  <!-- Right form -->
+  <div class="w-full max-w-md mx-auto">
+    <div class="lg:hidden text-center mb-6">
+      <div class="w-14 h-14 rounded-2xl bg-royal-500 text-white grid place-items-center font-extrabold mx-auto mb-3">EH</div>
+      <h1 class="text-2xl font-extrabold text-slate-900">EVENTHANDLER</h1>
+      <p class="text-sm text-slate-500">Sign in to the campus portal</p>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+      <h2 class="text-2xl font-bold text-slate-900">Welcome back</h2>
+      <p class="text-sm text-slate-500 mt-1">Sign in with your school credentials.</p>
+
+      <!-- Role tabs -->
+      <div x-data="{ tab: 'CLUB' }" class="mt-6">
+        <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+          <button @click="tab='CLUB'" :class="tab==='CLUB' ? 'bg-white shadow text-royal-600' : 'text-slate-500'"
+                  class="py-2 text-sm font-semibold rounded-lg transition">CLUB</button>
+          <button @click="tab='SSG'" :class="tab==='SSG' ? 'bg-white shadow text-royal-600' : 'text-slate-500'"
+                  class="py-2 text-sm font-semibold rounded-lg transition">SSG</button>
+          <button @click="tab='SAS'" :class="tab==='SAS' ? 'bg-white shadow text-royal-600' : 'text-slate-500'"
+                  class="py-2 text-sm font-semibold rounded-lg transition">SAS</button>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('auth.login') }}" class="mt-6 space-y-4">
+        <div>
+          <label class="text-sm font-medium text-slate-700">School ID</label>
+          <input name="school_id" required autocomplete="username"
+                 class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-royal-500 focus:border-royal-500 outline-none"
+                 placeholder="e.g. 2024-0001">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Password</label>
+          <input type="password" name="password" required autocomplete="current-password"
+                 class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-royal-500 focus:border-royal-500 outline-none"
+                 placeholder="••••••••">
+        </div>
+        <button type="submit"
+                class="w-full py-2.5 rounded-xl bg-royal-500 hover:bg-royal-600 text-white text-sm font-semibold transition">
+          Sign In
+        </button>
+      </form>
+
+      <div class="my-6 flex items-center gap-3 text-xs text-slate-400">
+        <div class="flex-1 h-px bg-slate-200"></div>OR<div class="flex-1 h-px bg-slate-200"></div>
+      </div>
+
+      <a href="{{ url_for('auth.google_login') }}"
+         class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
+        <svg class="w-4 h-4" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.72 1.22 9.23 3.6l6.9-6.9C35.94 2.02 30.48 0 24 0 14.75 0 6.75 5.5 2.98 13.4l8.03 6.24C12.85 13.6 17.98 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.58-.14-3.1-.4-4.5H24v9h12.7c-.55 2.95-2.2 5.45-4.7 7.15l7.25 5.62C43.55 37.75 46.5 31.65 46.5 24.5z"/><path fill="#FBBC05" d="M11.01 28.36A14.5 14.5 0 0 1 10.2 24c0-1.5.26-2.96.81-4.36l-8.03-6.24A23.94 23.94 0 0 0 0 24c0 3.87.93 7.52 2.98 10.6l8.03-6.24z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.79l-7.25-5.62C30.79 38.09 27.6 39 24 39c-6.02 0-11.15-4.1-12.99-9.64l-8.03 6.24C6.75 42.5 14.75 48 24 48z"/></svg>
+        Continue with Google
+      </a>
+
+      <p class="mt-6 text-center text-xs text-slate-500">
+        Demo accounts: <code class="font-mono text-slate-700">ADMIN-001</code>,
+        <code class="font-mono text-slate-700">SSG-001</code>,
+        <code class="font-mono text-slate-700">CLUB-001</code>
+        &nbsp;·&nbsp; pw: <code class="font-mono text-slate-700">password123</code>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

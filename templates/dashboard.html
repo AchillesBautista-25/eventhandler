@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ============ GREETING ============ -->
+<div class="flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <p class="text-sm text-slate-500">Welcome back</p>
+    <h1 class="text-2xl lg:text-3xl font-extrabold text-slate-900">
+      Hello, {{ current_user.full_name.split()[0] }} 👋
+    </h1>
+    <span class="mt-1 inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-royal-50 text-royal-700">
+      {{ current_user.role_label }}{% if current_user.organization_name %} · {{ current_user.organization_name }}{% endif %}
+    </span>
+  </div>
+  {% if current_user.role == 'CLUB' %}
+    <a href="{{ url_for('events.list_events') }}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-royal-500 hover:bg-royal-600 text-white text-sm font-semibold">
+      <i data-lucide="plus" class="w-4 h-4"></i> Propose Event
+    </a>
+  {% endif %}
+</div>
+
+<!-- ============ HERO METRIC ============ -->
+<div class="mt-6 rounded-3xl p-6 lg:p-8 text-white bg-gradient-to-br from-royal-600 via-royal-500 to-indigo-700 relative overflow-hidden">
+  <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10"></div>
+  <div class="absolute -bottom-12 left-10 w-40 h-40 rounded-full bg-white/10"></div>
+  <div class="relative">
+    <p class="text-sm text-white/80">Active attendees (last 30 days)</p>
+    <p class="text-5xl lg:text-6xl font-extrabold mt-2">{{ active_attendees }}</p>
+    <p class="mt-1 text-sm text-white/70">out of {{ total_students }} registered students</p>
+  </div>
+</div>
+
+<!-- ============ 2×2 STAT GRID ============ -->
+<div class="mt-6 grid grid-cols-2 gap-4">
+  <div class="bg-white rounded-2xl border border-slate-200 p-4 lg:p-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pending Approvals</span>
+      <span class="w-8 h-8 rounded-lg grid place-items-center bg-amber-50 text-amber-600">
+        <i data-lucide="clock" class="w-4 h-4"></i>
+      </span>
+    </div>
+    <p class="mt-3 text-2xl lg:text-3xl font-extrabold text-slate-900">{{ pending_count }}</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 p-4 lg:p-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Upcoming Events</span>
+      <span class="w-8 h-8 rounded-lg grid place-items-center bg-indigo-50 text-indigo-600">
+        <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+      </span>
+    </div>
+    <p class="mt-3 text-2xl lg:text-3xl font-extrabold text-slate-900">{{ upcoming|length }}</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 p-4 lg:p-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Completed Events</span>
+      <span class="w-8 h-8 rounded-lg grid place-items-center bg-emerald-50 text-emerald-600">
+        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+      </span>
+    </div>
+    <p class="mt-3 text-2xl lg:text-3xl font-extrabold text-slate-900">{{ completed_count }}</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 p-4 lg:p-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Attendance Rate</span>
+      <span class="w-8 h-8 rounded-lg grid place-items-center bg-royal-50 text-royal-600">
+        <i data-lucide="percent" class="w-4 h-4"></i>
+      </span>
+    </div>
+    <p class="mt-3 text-2xl lg:text-3xl font-extrabold text-slate-900">{{ attendance_rate }}%</p>
+  </div>
+</div>
+
+<!-- ============ CHART + RECENT ACTIVITY ============ -->
+<div class="mt-6 grid lg:grid-cols-3 gap-4">
+  <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-bold text-slate-900">Attendance Trend</h2>
+      <span class="text-xs text-slate-500">
+        Last {{ chart_labels|length }} approved event{{ '' if chart_labels|length == 1 else 's' }}
+      </span>
+    </div>
+    <div class="relative h-64">
+      <canvas id="trendChart"
+              data-labels='{{ chart_labels|tojson }}'
+              data-values='{{ chart_values|tojson }}'></canvas>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 p-5">
+    <h2 class="font-bold text-slate-900 mb-3">Recent Activity</h2>
+    {% if recent_logs %}
+      <ul class="space-y-3 max-h-72 overflow-auto pr-1">
+        {% for log in recent_logs %}
+          <li class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-full bg-royal-100 text-royal-700 grid place-items-center text-xs font-bold shrink-0">
+              {{ log.student.initials if log.student else '?' }}
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-slate-800 truncate">
+                {{ log.student.full_name if log.student else 'Unknown' }}
+              </p>
+              <p class="text-xs text-slate-500 truncate">{{ log.event.title }}</p>
+              <p class="text-xs text-slate-400">
+                {{ log.time_in.strftime('%b %d, %I:%M %p') }} · {{ log.status }}
+              </p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-slate-500">No activity yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ============ UPCOMING EVENTS ============ -->
+<div class="mt-6">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-bold text-slate-900">Upcoming Events</h2>
+    <a href="{{ url_for('events.list_events') }}"
+       class="text-sm font-semibold text-royal-600 hover:underline">View all →</a>
+  </div>
+  <div class="grid md:grid-cols-2 gap-4">
+    {% for ev in upcoming %}
+      <div class="bg-white rounded-2xl border border-slate-200 p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold text-royal-600 truncate">
+              {{ ev.organizer.organization_name or ev.organizer.full_name }}
+            </p>
+            <h3 class="mt-1 font-bold text-slate-900 truncate">{{ ev.title }}</h3>
+            <p class="text-sm text-slate-500 mt-1">{{ ev.venue }}</p>
+          </div>
+          <span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 whitespace-nowrap">
+            {{ ev.event_date.strftime('%b %d') }}
+          </span>
+        </div>
+        <div class="mt-3 flex items-center gap-3 text-xs text-slate-500">
+          <span class="flex items-center gap-1">
+            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+            {{ ev.start_time.strftime('%I:%M %p') }} – {{ ev.end_time.strftime('%I:%M %p') }}
+          </span>
+          <span class="flex items-center gap-1">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            {{ ev.attendance_logs|length }} checked-in
+          </span>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-sm text-slate-500">No upcoming events.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const canvas = document.getElementById('trendChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const labels = JSON.parse(canvas.dataset.labels || '[]');
+    const values = JSON.parse(canvas.dataset.values || '[]');
+
+    // No data → draw a friendly placeholder instead of an empty chart
+    if (labels.length === 0) {
+      const ctxWrap = canvas.parentElement;
+      ctxWrap.innerHTML =
+        '<div class="h-full grid place-items-center text-sm text-slate-400">' +
+        'No approved events yet — the chart will appear once events are attended.' +
+        '</div>';
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 260);
+    grad.addColorStop(0, 'rgba(59,73,223,0.35)');
+    grad.addColorStop(1, 'rgba(59,73,223,0.02)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Attendees',
+          data: values,
+          borderColor: '#3B49DF',
+          backgroundColor: grad,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#3B49DF',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0, color: '#94a3b8' },
+            grid: { color: '#eef2f7', drawBorder: false }
+          },
+          x: {
+            ticks: { color: '#94a3b8' },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}

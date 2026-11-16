@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EVENTHANDLER{% endblock %} · Campus Portal</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            royal: {
+              50:'#eef2ff', 100:'#e0e7ff', 400:'#6366f1',
+              500:'#3B49DF', 600:'#2f3bc4', 700:'#2530a0', 900:'#1e2472'
+            }
+          },
+          fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased" x-data="{ mobileNav: false }">
+
+  {% if current_user.is_authenticated %}
+  <!-- ============ DESKTOP SIDEBAR ============ -->
+  <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 flex-col z-30">
+    <div class="px-6 py-6 flex items-center gap-3 border-b border-slate-100">
+      <div class="w-10 h-10 rounded-2xl bg-royal-500 text-white grid place-items-center font-extrabold">EH</div>
+      <div>
+        <p class="font-extrabold text-slate-900 leading-tight">EVENTHANDLER</p>
+        <p class="text-xs text-slate-500">Campus Portal</p>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      {% set nav_items = [
+        ('dashboard.home',      'layout-dashboard', 'Dashboard'),
+        ('events.list_events',  'calendar',         'Events'),
+      ] %}
+      {% for endpoint, icon, label in nav_items %}
+        {% set active = request.endpoint == endpoint %}
+        <a href="{{ url_for(endpoint) }}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition
+                  {{ 'bg-royal-50 text-royal-700' if active else 'text-slate-600 hover:bg-slate-100' }}">
+          <i data-lucide="{{ icon }}" class="w-5 h-5"></i>{{ label }}
+        </a>
+      {% endfor %}
+
+      {% if current_user.role in ['SSG','SAS'] %}
+        {% set active = request.endpoint == 'approvals.index' %}
+        <a href="{{ url_for('approvals.index') }}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition
+                  {{ 'bg-royal-50 text-royal-700' if active else 'text-slate-600 hover:bg-slate-100' }}">
+          <i data-lucide="check-circle" class="w-5 h-5"></i>Approvals
+        </a>
+        {% set active = request.endpoint == 'reports.index' %}
+        <a href="{{ url_for('reports.index') }}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition
+                  {{ 'bg-royal-50 text-royal-700' if active else 'text-slate-600 hover:bg-slate-100' }}">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>Reports
+        </a>
+      {% endif %}
+
+      {% set active = request.endpoint == 'settings.index' %}
+      <a href="{{ url_for('settings.index') }}"
+         class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition
+                {{ 'bg-royal-50 text-royal-700' if active else 'text-slate-600 hover:bg-slate-100' }}">
+        <i data-lucide="settings" class="w-5 h-5"></i>Settings
+      </a>
+    </nav>
+
+    <div class="p-4 border-t border-slate-100">
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-10 h-10 rounded-full bg-royal-100 text-royal-700 grid place-items-center font-bold">
+          {{ current_user.initials }}
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold truncate">{{ current_user.full_name }}</p>
+          <p class="text-xs text-slate-500 truncate">{{ current_user.role_label }}</p>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}"
+         class="mt-3 flex items-center gap-2 text-xs text-slate-500 hover:text-rose-600 px-2">
+        <i data-lucide="log-out" class="w-4 h-4"></i>Sign out
+      </a>
+    </div>
+  </aside>
+  {% endif %}
+
+  <!-- ============ MOBILE TOP BAR ============ -->
+  {% if current_user.is_authenticated %}
+  <header class="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-xl bg-royal-500 text-white grid place-items-center font-extrabold text-sm">EH</div>
+      <span class="font-extrabold text-slate-900">EVENTHANDLER</span>
+    </div>
+    <button @click="mobileNav = !mobileNav" class="p-2 rounded-lg hover:bg-slate-100">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </header>
+  {% endif %}
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="{% if current_user.is_authenticated %}lg:ml-64{% endif %} min-h-screen pb-24 lg:pb-10">
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="px-4 pt-4 space-y-2 lg:px-8 max-w-6xl mx-auto">
+          {% for cat, msg in messages %}
+            {% set colors = {
+              'success': 'bg-emerald-50 text-emerald-800 border-emerald-200',
+              'error':   'bg-rose-50 text-rose-800 border-rose-200',
+              'warning': 'bg-amber-50 text-amber-800 border-amber-200',
+              'info':    'bg-sky-50 text-sky-800 border-sky-200',
+            } %}
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+                 class="rounded-xl border px-4 py-3 text-sm flex items-start justify-between gap-3 {{ colors.get(cat, colors['info']) }}">
+              <span>{{ msg }}</span>
+              <button @click="show = false" class="opacity-60 hover:opacity-100">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="max-w-6xl mx-auto px-4 lg:px-8 py-6">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- ============ MOBILE BOTTOM NAV ============ -->
+  {% if current_user.is_authenticated %}
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30">
+    <div class="grid {{ 'grid-cols-4' if current_user.role in ['SSG','SAS'] else 'grid-cols-3' }} py-2">
+      {% set bottom = [
+        ('dashboard.home',     'home',           'Home'),
+        ('events.list_events', 'calendar',       'Events'),
+      ] %}
+      {% if current_user.role in ['SSG','SAS'] %}
+        {% set bottom = bottom + [('approvals.index','check-circle','Approvals'), ('reports.index','bar-chart-3','Reports')] %}
+      {% else %}
+        {% set bottom = bottom + [('settings.index','user','Profile')] %}
+      {% endif %}
+      {% for endpoint, icon, label in bottom %}
+        {% set active = request.endpoint == endpoint %}
+        <a href="{{ url_for(endpoint) }}"
+           class="flex flex-col items-center gap-0.5 py-1 text-xs
+                  {{ 'text-royal-600' if active else 'text-slate-500' }}">
+          <i data-lucide="{{ icon }}" class="w-5 h-5"></i>{{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </nav>
+  {% endif %}
+
+  <script>
+    lucide.createIcons();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
