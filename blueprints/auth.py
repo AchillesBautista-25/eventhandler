@@ -3,6 +3,7 @@ from flask import (Blueprint, render_template, request, redirect,
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db, oauth
 from models import User
+import os
 
 bp = Blueprint("auth", __name__)
 
@@ -31,7 +32,11 @@ def google_login():
     if not current_app.config["GOOGLE_CLIENT_ID"]:
         flash("Google OAuth is not configured on this server.", "warning")
         return redirect(url_for("auth.login"))
-    redirect_uri = "http://localhost:3000/auth/callback"
+
+    # Priority: env var (for Codespaces / prod) → auto-detect (for local dev)
+    redirect_uri = os.getenv("REDIRECT_URI") or url_for(
+        "auth.google_callback", _external=True
+    )
     return oauth.google.authorize_redirect(redirect_uri)
 
 

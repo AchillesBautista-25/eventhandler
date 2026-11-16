@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    container_name: eventhandler-app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist SQLite database outside the container
+      - ./instance:/app/instance
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+      - PORT=3000
+    restart: unless-stopped
